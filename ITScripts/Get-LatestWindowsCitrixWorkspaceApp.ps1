@@ -1,7 +1,7 @@
 <#
 <stScript uid="b5d4a516-784a-4311-ac6a-19720e807093">
     <name>Get Latest Windows Citrix WorkspaceApp</name>
-    <version>1.0.2.0</version>
+    <version>1.0.3.2</version>
     <author>J81-Blog</author>
     <scriptType type="consoleOnly" />
     <minEngineVersion>9.2.0.0</minEngineVersion>
@@ -30,6 +30,11 @@
             <description>The (default) Filename</description>
             <default>'CitrixWorkspaceApp.exe'</default>
         </parameter>
+        <parameter>
+            <name>LogFile</name>
+            <description>LogFile name, leave empty for no log</description>
+            <default>'C:\Users\IWC_ITScript_Download_CitrixWorkspaceApp.txt'</default>
+        </parameter>
     </parameters>
 </stScript>
 #>
@@ -37,11 +42,17 @@
 param (
     [String]$uri = "https://downloadplugins.citrix.com/Windows/CitrixWorkspaceApp.exe",
 
-    [String]$fileName = "CitrixWorkspaceApp.exe"
+    [String]$fileName = "CitrixWorkspaceApp.exe",
+    
+    [String]$LogFile = "C:\Users\IWC_ITScript_Download_CitrixWorkspaceApp.txt"
 )
 
+if (-Not [String]::IsNullOrEmpty($LogFile)) {
+    try { Start-Transcript -Path $LogFile -Force } catch { }
+}
+
 $downloadedFilename = Join-Path -Path $env:temp -ChildPath $fileName
-Invoke-WebRequest -Uri $uri -OutFile $downloadedFilename
+Invoke-WebRequest -Uri $uri -OutFile $downloadedFilename -UseBasicParsing
 Unblock-File -Path $downloadedFilename
 
 Update-TypeData -TypeName System.Io.FileInfo -MemberType ScriptProperty -MemberName FileVersionUpdated -Value {
@@ -58,11 +69,15 @@ $NewName = '{0}_{1}{2}' -f $FileInfo.BaseName, $FileInfo.FileVersionUpdated.ToSt
 $DownloadPatchPath = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Ivanti\Security Controls\Console\Options' -Name DownloadPath | Select-Object -ExpandProperty DownloadPath
 Move-Item -Path $downloadedFilename -Destination $(Join-Path -Path $DownloadPatchPath -ChildPath $NewName) -Force
 
+if (-Not [String]::IsNullOrEmpty($LogFile)) {
+    try { Stop-Transcript } catch { }
+}
+
 # SIG # Begin signature block
 # MIITYgYJKoZIhvcNAQcCoIITUzCCE08CAQExDzANBglghkgBZQMEAgEFADB5Bgor
 # BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCCZDj7vuiprQTqw
-# HC3eT7VWcHBVs0G43WWRmq2lca8MAaCCEHUwggTzMIID26ADAgECAhAsJ03zZBC0
+# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCAPvC1SZNsceKlq
+# /BiBEbH7y8GDEMauSdZAG0P/OINXuKCCEHUwggTzMIID26ADAgECAhAsJ03zZBC0
 # i/247uUvWN5TMA0GCSqGSIb3DQEBCwUAMHwxCzAJBgNVBAYTAkdCMRswGQYDVQQI
 # ExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxGDAWBgNVBAoT
 # D1NlY3RpZ28gTGltaXRlZDEkMCIGA1UEAxMbU2VjdGlnbyBSU0EgQ29kZSBTaWdu
@@ -156,11 +171,11 @@ Move-Item -Path $downloadedFilename -Destination $(Join-Path -Path $DownloadPatc
 # IFNpZ25pbmcgQ0ECECwnTfNkELSL/bju5S9Y3lMwDQYJYIZIAWUDBAIBBQCggYQw
 # GAYKKwYBBAGCNwIBDDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGC
 # NwIBBDAcBgorBgEEAYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAvBgkqhkiG9w0BCQQx
-# IgQgcs+MsKzKeAvASIkExXXyKbZ2xJoLIYsusdOYSzOMTFIwDQYJKoZIhvcNAQEB
-# BQAEggEAmNXHMmhByFBCeN43WRx0UMUi9zQ2NqoxEsldMVISRdOLYo03nA9Lhp2e
-# kN/RXdL80ANSHyayZY8nA2S+0D1FlBp5u++PYHsBpbuvZz4FZH2IWZLoxN/4AyU6
-# Jv7AFVNyxdE4PTHH1fXc2itJfP93VCfP3Nxng/hZqiVLyBbUROtZ9WDKVmxgc30f
-# 4lMm6UrRieer8zxeo6hh/drYuIYlOcA9KE/dniD3kjnpmqrbIWUyDB28CeHiwD1R
-# y1KEOQLEzrtiykKq8OavphURiI8FMbi8ZQ776dAEmByMMcusCARRSIPRAyFSv6q/
-# 10st6rTvZheIqEoyXcAVDMSaxeQblw==
+# IgQgqzLZ54QUvAJErfhV57BDLMMr8ulTaPZlZlvgvjIn/18wDQYJKoZIhvcNAQEB
+# BQAEggEAOBl2Jm97T/xko5xBC22159yBbWBicbw0SzP3Df+kMmH6P6+Bl6NRD4E7
+# mg7pvtDMLcOCq90tNkDZ61uDwH9O5xY5dw57Z/cetWJY5Hwy6rOIsQ8pD/R6oMpC
+# s8ZD1M93Ug5L/8WvNSrXWxtfybXn5nUKXiQf4FnT22p9eC9MkTC9wSIf5eERYI34
+# YSEp0R8wYk0uooBAIvWW8lqLUNl6Ab9XwubBy9fZnwYiXTFWbCPFvNWTdrjX4NDq
+# I6I35GeibgyuEefSSNUfBDxkAToSk9eQSS7uVAsq8pJD+mMs27td98rBNXCXA6mf
+# c3/03fDntZcWjtYSaGBKFwBLNwpsjg==
 # SIG # End signature block
